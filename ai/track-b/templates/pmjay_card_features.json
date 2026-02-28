@@ -1,0 +1,8 @@
+{
+  "expected_features": {
+    "qr_size_ratio": [0.15, 0.25],
+    "hologram_position": "top_right",
+    "mrn_length": 12,
+    "font_consistency": 0.9
+  }
+}
