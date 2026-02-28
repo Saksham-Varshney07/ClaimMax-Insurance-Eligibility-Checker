@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClaimMax — AI Bill Scanner (Track A Demo)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:       #0a0c14;
+      --surface:  #12151f;
+      --card:     #181c2a;
+      --border:   #252a3d;
+      --primary:  #4f8ef7;
+      --success:  #22c55e;
+      --warning:  #f59e0b;
+      --danger:   #ef4444;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --accent:   #7c3aed;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Header ────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .header h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    .header p {
+      color: var(--muted);
+      margin-top: 0.6rem;
+      font-size: 1rem;
+    }
+
+    /* ── Upload zone ───────────────────────── */
+    .upload-zone {
+      width: 100%;
+      max-width: 560px;
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s ease;
+      background: var(--surface);
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--primary);
+      background: #1a1f35;
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .upload-zone h2 { font-size: 1.1rem; font-weight: 600; }
+    .upload-zone p { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+
+    /* ── Preview ───────────────────────────── */
+    #preview-wrap {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      margin-top: 1.5rem;
+    }
+    #preview-img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      max-height: 300px;
+      object-fit: contain;
+      background: #000;
+    }
+
+    /* ── Status bar ────────────────────────── */
+    #status-bar {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      margin-top: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result card ───────────────────────── */
+    #result-card {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      margin-top: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .result-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-header h3 { font-size: 1rem; font-weight: 600; }
+    .conf-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 100px;
+    }
+    .conf-high { background: #16341e; color: var(--success); }
+    .conf-mid  { background: #2d2507; color: var(--warning); }
+    .conf-low  { background: #2d0a0a; color: var(--danger);  }
+
+    .fields { padding: 1rem 1.25rem; display: grid; gap: 0.75rem; }
+    .field {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .field-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+    .field-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-align: right;
+    }
+    .field-value.amount {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .eligibility-banner {
+      margin: 0 1.25rem 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1a1f35, #1d2235);
+      border: 1px solid var(--primary);
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .eligibility-banner b { color: #fff; }
+
+    /* ── Raw JSON toggle ───────────────────── */
+    details { width: 100%; max-width: 560px; margin-top: 1rem; }
+    summary {
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding: 0.5rem 0;
+      user-select: none;
+    }
+    summary:hover { color: var(--text); }
+    pre#json-out {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 0.78rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      color: #a5f3fc;
+      margin-top: 0.5rem;
+    }
+
+    /* ── Error card ────────────────────────── */
+    #error-card {
+      display: none;
+      width: 100%;
+      max-width: 560px;
+      margin-top: 1.5rem;
+      background: #1c0a0a;
+      border: 1px solid var(--danger);
+      border-radius: 16px;
+      padding: 1.25rem;
+    }
+    #error-card h3 { color: var(--danger); font-size: 1rem; margin-bottom: 0.5rem; }
+    #error-card p  { font-size: 0.9rem; color: #f87171; margin-bottom: 1rem; }
+
+    /* ── Fallback form ─────────────────────── */
+    .fallback-form { display: grid; gap: 0.75rem; }
+    .fallback-form label { font-size: 0.82rem; color: var(--muted); }
+    .fallback-form input,
+    .fallback-form select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.85rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .btn {
+      padding: 0.7rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      margin-left: 0.5rem;
+    }
+    .actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
+
+    /* ── Demo chips ────────────────────────── */
+    .chip-row {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 2rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .chip {
+      font-size: 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.3rem 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Timing ────────────────────────────── */
+    #timing { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">ClaimMax · Track A Demo · AI OCR Pipeline</div>
+    <h1>AI Bill Scanner</h1>
+    <p>Hospital bill photo → structured JSON in &lt;3 seconds</p>
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="billInput" accept="image/*" />
+    <div class="upload-icon">🏥</div>
+    <h2>Drop bill photo here or click to browse</h2>
+    <p>JPG · PNG · WEBP — supports crumpled, scanned, or photographed bills</p>
+  </div>
+
+  <!-- Preview -->
+  <div id="preview-wrap">
+    <img id="preview-img" alt="Bill preview" />
+  </div>
+
+  <!-- Status bar -->
+  <div id="status-bar" style="display:none">
+    <div class="spinner"></div>
+    <span id="status-text">Initialising OCR engine…</span>
+  </div>
+
+  <!-- Result Card -->
+  <div id="result-card">
+    <div class="result-header">
+      <h3>✅ Extraction Complete</h3>
+      <span class="conf-badge" id="conf-badge"></span>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <span class="field-label">Amount</span>
+        <span class="field-value amount" id="f-amount">—</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Hospital</span>
+        <span class="field-value" id="f-hospital">—</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Treatment</span>
+        <span class="field-value" id="f-treatment">—</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Category</span>
+        <span class="field-value" id="f-category">—</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Date</span>
+        <span class="field-value" id="f-date">—</span>
+      </div>
+      <div class="field">
+        <span class="field-label">Patient</span>
+        <span class="field-value" id="f-patient">—</span>
+      </div>
+    </div>
+    <div class="eligibility-banner" id="eligibility-banner"></div>
+  </div>
+
+  <!-- Raw JSON -->
+  <details id="json-details" style="display:none">
+    <summary>▶ View raw JSON output</summary>
+    <pre id="json-out"></pre>
+  </details>
+
+  <!-- Timing -->
+  <div id="timing"></div>
+
+  <!-- Error / Fallback -->
+  <div id="error-card">
+    <h3>⚠️ OCR Quality Too Low</h3>
+    <p id="error-msg"></p>
+    <div class="fallback-form">
+      <label>
+        Bill Amount (₹)
+        <input type="number" id="fb-amount" placeholder="25981" min="100" max="1000000" />
+      </label>
+      <label>
+        Treatment Category
+        <select id="fb-category">
+          <option value="orthopedic_minor">Orthopaedic (Minor — fracture, plaster)</option>
+          <option value="orthopedic_major">Orthopaedic (Major — surgery, implant)</option>
+          <option value="emergency">Emergency / Trauma</option>
+          <option value="opd_general">OPD / General Consultation</option>
+          <option value="specialist">Specialist Consultation</option>
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="submitFallback()">Submit Manual Entry</button>
+      <button class="btn btn-outline" onclick="resetUI()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Demo info chips -->
+  <div class="chip-row">
+    <div class="chip">🔒 Runs locally in browser</div>
+    <div class="chip">📄 Tesseract.js Engine</div>
+    <div class="chip">🇮🇳 Hindi + English OCR</div>
+    <div class="chip">⚡ &lt;3 second target</div>
+  </div>
+
+
+  <!-- ── Script ──────────────────────────────────────────────────────────── -->
+  <script type="module">
+    // ── Inline OCR pipeline (no bundler needed for demo) ──────────────────
+
+    // Load Tesseract.js from CDN
+    const { createWorker } = await import(
+      'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js'
+    );
+
+    // ── Medical dictionary (inlined for demo) ─────────────────────────────
+    const MEDICAL_DICT = {
+      orthopedic_minor: ["fracture", "plaster", "dislocation", "sprain", "ORT", "cast", "splint", "ligament", "tendon", "bandage", "collar bone", "hairline"],
+      orthopedic_major: ["surgery", "implant", "replacement", "arthroscopy", "rod insertion", "nailing", "k-wire", "plate fixation", "osteotomy", "ORIF"],
+      emergency:        ["ER", "trauma", "ambulance", "emergency", "casualty", "ICU", "critical", "accident", "burn", "CPR"],
+      opd_general:      ["consultation", "OPD", "checkup", "general", "fever", "cold", "cough", "review", "follow-up", "prescription"],
+      specialist:       ["dermatology", "cardiology", "neurology", "orthopedic", "ENT", "ophthalmology", "urology", "oncology"],
+    };
+
+    const CATEGORY_LABELS = {
+      orthopedic_minor: 'Orthopaedic (Minor)',
+      orthopedic_major: 'Orthopaedic (Major Surgery)',
+      emergency:        'Emergency / Trauma',
+      opd_general:      'OPD / General',
+      specialist:       'Specialist',
+    };
+
+    const ELIGIBILITY = {
+      orthopedic_minor: 'PMJAY up to ₹15,000 + ESIC up to ₹7,000 eligible',
+      orthopedic_major: 'PMJAY up to ₹1,50,000 — file ESIC Form 10 + 14',
+      emergency:        'Emergency PMJAY pre-auth — contact TPA immediately',
+      opd_general:      'OPD reimbursement via ESIC Form 10 (up to ₹5,000)',
+      specialist:       'ESIC specialist referral reimbursement applicable',
+    };
+
+    const HOSPITAL_PATTERNS = [
+      { re: /govt\.?\s+general\s+hospital/i,   label: 'Govt General Hospital' },
+      { re: /government\s+hospital/i,           label: 'Government Hospital' },
+      { re: /esic\s+hospital/i,                 label: 'ESIC Hospital' },
+      { re: /civil\s+hospital/i,                label: 'Civil Hospital' },
+      { re: /district\s+hospital/i,             label: 'District Hospital' },
+      { re: /medical\s+college/i,               label: 'Medical College Hospital' },
+    ];
+
+    // ── Singleton worker ──────────────────────────────────────────────────
+    let worker = null;
+    async function initWorker() {
+      if (worker) return worker;
+      setStatus('Loading OCR engine (first time may take ~10s)…');
+      worker = await createWorker('eng+hin', 1, { logger: m => {
+        if (m.status === 'recognizing text')
+          setStatus(`Recognising text… ${Math.round(m.progress * 100)}%`);
+      }});
+      await worker.setParameters({
+        tessedit_pageseg_mode: '6',
+        preserve_interword_spaces: '1',
+      });
+      return worker;
+    }
+
+    // ── Field extractors ──────────────────────────────────────────────────
+    function extractAmount(text) {
+      const patterns = [
+        /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/gi,
+        /(?:Total|Grand Total|Net Amount|Amount Payable|Bill Amount|Paid)\s*[:\-]?\s*(?:₹|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
+      ];
+      const vals = [];
+      for (const p of patterns) {
+        let m; while ((m = p.exec(text)) !== null) {
+          const v = parseFloat(m[1].replace(/,/g,''));
+          if (!isNaN(v) && v >= 100) vals.push(v);
+        }
+      }
+      return vals.length ? Math.max(...vals) : null;
+    }
+
+    function extractDate(text) {
+      const re = /\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})\b/g;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const [,d,mo,y] = m;
+        const di=+d, mi=+mo, yi=+y;
+        if (di<1||di>31||mi<1||mi>12||yi<2000||yi>2030) continue;
+        return `${yi}-${String(mi).padStart(2,'0')}-${String(di).padStart(2,'0')}`;
+      }
+      return null;
+    }
+
+    function extractHospital(text) {
+      for (const {re,label} of HOSPITAL_PATTERNS) if (re.test(text)) return label;
+      const line = text.split('\n').find(l => /hospital|clinic|centre|dispensary/i.test(l));
+      return line ? line.trim().slice(0,60) : 'Unknown Hospital';
+    }
+
+    function extractPatient(text) {
+      const m = text.match(/(?:patient\s+name|patient|name)\s*[:\-]\s*([A-Z][a-zA-Z\s\.]{2,40})/i);
+      return m ? m[1].trim() : null;
+    }
+
+    function extractTreatment(text) {
+      const patterns = [/fracture\s+fixation[\s\+&]*plaster/i,/fracture\s+treatment/i,/emergency\s+treatment/i,/general\s+surgery/i];
+      for (const p of patterns) { const m=text.match(p); if(m) return m[0].trim(); }
+      const line=text.split('\n').find(l=>/procedure|treatment|diagnosis|operation|surgery/i.test(l));
+      return line ? line.replace(/[:\-]/g,'').trim().slice(0,80) : 'Medical Treatment';
+    }
+
+    function classifyTreatment(text) {
+      const lower=text.toLowerCase();
+      const scores={};
+      for (const [cat,terms] of Object.entries(MEDICAL_DICT)) {
+        scores[cat]=terms.filter(t=>lower.includes(t.toLowerCase())).length;
+      }
+      const [best,count]=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+      const maxT=MEDICAL_DICT[best].length;
+      const conf=count===0?0.3:Math.min(0.99,0.5+(count/maxT)*0.5);
+      return { category: count>0?best:'opd_general', confidence: +conf.toFixed(2) };
+    }
+
+    // ── Main pipeline ─────────────────────────────────────────────────────
+    async function processBillPhoto(file) {
+      const t0=Date.now();
+
+      // Preprocess: resize via canvas
+      const bitmap = await createImageBitmap(file);
+      const scale  = 1024/bitmap.width;
+      const canvas = new OffscreenCanvas(1024, Math.round(bitmap.height*scale));
+      const ctx    = canvas.getContext('2d');
+      ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      // Grayscale
+      for(let i=0;i<imgData.data.length;i+=4){
+        const l=0.299*imgData.data[i]+0.587*imgData.data[i+1]+0.114*imgData.data[i+2];
+        imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=l;
+      }
+      ctx.putImageData(imgData,0,0);
+      const blob=await canvas.convertToBlob({type:'image/png'});
+      const url=URL.createObjectURL(blob);
+
+      setStatus('Running OCR (Tesseract eng+hin)…');
+      const w=await initWorker();
+      const {data}=await w.recognize(url);
+      URL.revokeObjectURL(url);
+
+      const text=data.text;
+      const tConf=data.confidence;
+
+      const amount   = extractAmount(text);
+      const date     = extractDate(text)||new Date().toISOString().slice(0,10);
+      const hospital = extractHospital(text);
+      const patient  = extractPatient(text);
+      const treatment= extractTreatment(text);
+      const {category,confidence:catConf}=classifyTreatment(text);
+
+      // Compute final confidence
+      let conf = tConf/100;
+      if (!amount)                                    conf -= 0.2;
+      if (hospital==='Unknown Hospital')              conf -= 0.05;
+      conf = +Math.max(0,Math.min(1,conf)).toFixed(2);
+
+      if (conf < 0.65 || !amount) {
+        return {
+          success: false,
+          reason: 'poor_ocr_quality',
+          error: `OCR confidence too low (${Math.round(conf*100)}%). ${!amount?'Could not read bill amount. ':''}Please retake in better lighting.`,
+          processingMs: Date.now()-t0,
+        };
+      }
+
+      return {
+        success: true,
+        data: { hospital, treatment, amount, date, patient, category, confidence: conf,
+                eligibility: ELIGIBILITY[category] },
+        meta: { processingMs: Date.now()-t0 },
+      };
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────
+    function setStatus(msg) {
+      document.getElementById('status-text').textContent = msg;
+    }
+
+    function showSpinner(v) {
+      const el = document.getElementById('status-bar');
+      el.style.display = v ? 'flex' : 'none';
+    }
+
+    function resetUI() {
+      document.getElementById('result-card').style.display='none';
+      document.getElementById('error-card').style.display='none';
+      document.getElementById('json-details').style.display='none';
+      document.getElementById('preview-wrap').style.display='none';
+      document.getElementById('timing').textContent='';
+      document.getElementById('billInput').value='';
+    }
+
+    function renderResult(result) {
+      showSpinner(false);
+      const rc=document.getElementById('result-card');
+      const jd=document.getElementById('json-details');
+      const d=result.data;
+
+      rc.style.display='block';
+      jd.style.display='block';
+
+      document.getElementById('f-amount').textContent=`₹${d.amount?.toLocaleString('en-IN')||'—'}`;
+      document.getElementById('f-hospital').textContent=d.hospital;
+      document.getElementById('f-treatment').textContent=d.treatment;
+      document.getElementById('f-category').textContent=CATEGORY_LABELS[d.category]||d.category;
+      document.getElementById('f-date').textContent=d.date;
+      document.getElementById('f-patient').textContent=d.patient||'Not mentioned';
+      document.getElementById('eligibility-banner').innerHTML=`<b>💡 Insurance Eligibility:</b> ${d.eligibility}`;
+
+      const badge=document.getElementById('conf-badge');
+      const pct=Math.round(d.confidence*100);
+      badge.textContent=`${pct}% confidence`;
+      badge.className='conf-badge '+(pct>=80?'conf-high':pct>=65?'conf-mid':'conf-low');
+
+      document.getElementById('json-out').textContent=JSON.stringify(result,null,2);
+      document.getElementById('timing').textContent=`⏱ Processed in ${result.meta?.processingMs||'—'}ms`;
+    }
+
+    function renderError(result) {
+      showSpinner(false);
+      document.getElementById('error-card').style.display='block';
+      document.getElementById('error-msg').textContent=result.error;
+      document.getElementById('timing').textContent=`⏱ ${result.processingMs||'—'}ms`;
+    }
+
+    window.submitFallback = function() {
+      const amount=+document.getElementById('fb-amount').value;
+      const category=document.getElementById('fb-category').value;
+      if (!amount || amount<100) { alert('Please enter a valid amount (≥ ₹100)'); return; }
+      document.getElementById('error-card').style.display='none';
+      renderResult({
+        success:true,
+        data:{
+          hospital:'[Manual Entry]', treatment:'[Manual Entry]',
+          amount, date:new Date().toISOString().slice(0,10),
+          patient:null, category, confidence:0, eligibility:ELIGIBILITY[category]
+        },
+        meta:{processingMs:0}
+      });
+    };
+
+    window.resetUI = resetUI;
+
+    // ── File input handler ────────────────────────────────────────────────
+    document.getElementById('billInput').addEventListener('change', async e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Show preview
+      const prev=document.getElementById('preview-wrap');
+      const img=document.getElementById('preview-img');
+      img.src=URL.createObjectURL(file);
+      prev.style.display='block';
+
+      resetUI();
+      prev.style.display='block';
+      img.src=URL.createObjectURL(file);
+      showSpinner(true);
+      setStatus('Pre-processing image…');
+
+      try {
+        const result = await processBillPhoto(file);
+        if (result.success) renderResult(result);
+        else renderError(result);
+      } catch(err) {
+        renderError({ success:false, error:`Unexpected error: ${err.message}`, processingMs:0 });
+      }
+    });
+
+    // Drag & drop
+    const dz=document.getElementById('dropZone');
+    dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag-over');});
+    dz.addEventListener('dragleave',  ()=>dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e=>{
+      e.preventDefault(); dz.classList.remove('drag-over');
+      const file=e.dataTransfer.files?.[0];
+      if(file && file.type.startsWith('image/')){
+        const input=document.getElementById('billInput');
+        const dt=new DataTransfer(); dt.items.add(file); input.files=dt.files;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
+  </script>
+</body>
+</html>
