@@ -2,38 +2,16 @@ import { Request, Response } from "express";
 import path from "path";
 import { generateEsicPdf, generatePmjayPdf } from "../services/pdfService";
 import * as claimRepository from "../repositories/claimRepository";
-import { BillData, User } from "../types";
-
-interface Claim {
-    id: number;
-    scheme: string;
-    eligible: boolean;
-    amount: number;
-    reason: string;
-    pdfUrl?: string | null;
-}
-
-interface GenerateDocsBody {
-    billData: BillData;
-    claims: Claim[];
-    caseId: number;
-    user: User;
-}
+import { GenerateDocsBody } from "../validation/schemas";
 
 /**
  * POST /api/generate-docs
- * Body: { billData, claims, caseId, user }
+ * Body validated upstream by Zod (GenerateDocsSchema).
  * Returns: { esicPdfUrl, pmjayPdfUrl }
  */
 export async function generateDocs(req: Request, res: Response): Promise<void> {
     try {
-        const { billData, claims, caseId, user } = req.body as GenerateDocsBody;
-
-        if (!billData || !claims || !caseId || !user) {
-            res.status(400).json({ error: "Missing required fields: billData, claims, caseId, user" });
-            return;
-        }
-
+        const { billData, claims, user } = req.body as GenerateDocsBody;
         const esicClaim = claims.find((c) => c.scheme === "ESIC" && c.eligible);
         const pmjayClaim = claims.find((c) => c.scheme === "PMJAY" && c.eligible);
 

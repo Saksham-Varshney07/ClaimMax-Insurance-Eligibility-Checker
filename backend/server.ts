@@ -4,6 +4,7 @@ import cors from "cors";
 import path from "path";
 import morgan from "morgan";
 import prisma from "./services/prismaClient";
+import { startCleanupScheduler } from "./services/cleanupService";
 
 import extractBillRouter from "./routes/extractBill";
 import computeClaimsRouter from "./routes/computeClaims";
@@ -36,6 +37,7 @@ async function start(): Promise<void> {
 
     const server = app.listen(PORT, () => {
         console.log(`🚀  ClaimMax backend running on http://localhost:${PORT}`);
+        startCleanupScheduler();
     });
 
     server.on("error", (err: NodeJS.ErrnoException) => {
