@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { BillData, ClaimData, User } from "../types";
 
-const PUBLIC_DOCS_DIR = path.join(__dirname, "..", "public", "docs");
+const PUBLIC_DOCS_DIR = path.join(process.cwd(), "public", "docs");
 
 interface PdfOptions {
     billData: BillData;

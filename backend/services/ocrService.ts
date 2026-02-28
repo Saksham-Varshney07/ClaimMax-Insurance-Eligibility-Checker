@@ -75,14 +75,14 @@ function extractTreatment(text: string): string | null {
  */
 export async function extractBillData(imageBuffer: Buffer): Promise<BillData> {
     const tmpPath = path.join(os.tmpdir(), `claimmax-${Date.now()}.png`);
-    fs.writeFileSync(tmpPath, imageBuffer);
+    await fs.promises.writeFile(tmpPath, imageBuffer);
 
     let ocrText = "";
     try {
         ocrText = await tesseract(tmpPath, { lang: "eng", oem: 1, psm: 6 });
     } finally {
         try {
-            fs.unlinkSync(tmpPath);
+            await fs.promises.unlink(tmpPath);
         } catch {
             // ignore cleanup errors
         }

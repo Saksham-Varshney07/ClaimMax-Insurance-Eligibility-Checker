@@ -1,8 +1,7 @@
-import path from "path";
 import { BillData, ClaimData, CoverageFlags, RulesMap } from "../types";
+import rulesJson from "../data/rules.json";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const rules: RulesMap = require(path.join(__dirname, "..", "data", "rules.json"));
+const rules = rulesJson as RulesMap;
 
 /**
  * Apply coverage rules and compute a claim list for PMJAY / ESIC / GROUP.

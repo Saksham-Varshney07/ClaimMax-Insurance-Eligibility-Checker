@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import morgan from "morgan";
 import prisma from "./services/prismaClient";
 
 import extractBillRouter from "./routes/extractBill";
@@ -12,8 +13,9 @@ const app = express();
 const PORT = process.env.PORT ?? 4000;
 
 // Middleware
+app.use(morgan("dev"));
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000" }));
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 // Static – serve generated PDFs
 app.use("/docs", express.static(path.join(__dirname, "public", "docs")));

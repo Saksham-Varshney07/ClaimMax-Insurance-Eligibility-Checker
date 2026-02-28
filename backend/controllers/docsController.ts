@@ -34,28 +34,35 @@ export async function generateDocs(req: Request, res: Response): Promise<void> {
             return;
         }
 
-        let esicPdfUrl: string | null = null;
-        let pmjayPdfUrl: string | null = null;
+        const esicClaim = claims.find((c) => c.scheme === "ESIC" && c.eligible);
+        const pmjayClaim = claims.find((c) => c.scheme === "PMJAY" && c.eligible);
 
-        for (const claim of claims) {
-            if (!claim.eligible) continue;
+        // Generate eligible PDFs in parallel
+        const [esicResult, pmjayResult] = await Promise.all([
+            esicClaim
+                ? generateEsicPdf({ billData, claim: { ...esicClaim, scheme: "ESIC" }, user }).then((filePath) => ({
+                    url: `/docs/${path.basename(filePath)}`,
+                    id: esicClaim.id,
+                }))
+                : null,
+            pmjayClaim
+                ? generatePmjayPdf({ billData, claim: { ...pmjayClaim, scheme: "PMJAY" }, user }).then((filePath) => ({
+                    url: `/docs/${path.basename(filePath)}`,
+                    id: pmjayClaim.id,
+                }))
+                : null,
+        ]);
 
-            if (claim.scheme === "ESIC") {
-                const filePath = await generateEsicPdf({ billData, claim: { ...claim, scheme: "ESIC" }, user });
-                const filename = path.basename(filePath);
-                esicPdfUrl = `/docs/${filename}`;
-                await claimRepository.updateClaimPdfUrl(claim.id, esicPdfUrl);
-            }
+        // Persist pdfUrls in parallel
+        await Promise.all([
+            esicResult ? claimRepository.updateClaimPdfUrl(esicResult.id, esicResult.url) : null,
+            pmjayResult ? claimRepository.updateClaimPdfUrl(pmjayResult.id, pmjayResult.url) : null,
+        ]);
 
-            if (claim.scheme === "PMJAY") {
-                const filePath = await generatePmjayPdf({ billData, claim: { ...claim, scheme: "PMJAY" }, user });
-                const filename = path.basename(filePath);
-                pmjayPdfUrl = `/docs/${filename}`;
-                await claimRepository.updateClaimPdfUrl(claim.id, pmjayPdfUrl);
-            }
-        }
-
-        res.status(200).json({ esicPdfUrl, pmjayPdfUrl });
+        res.status(200).json({
+            esicPdfUrl: esicResult?.url ?? null,
+            pmjayPdfUrl: pmjayResult?.url ?? null,
+        });
     } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.error("[generateDocs]", err);
