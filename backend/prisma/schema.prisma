@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Complaint {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transcript      String
+  language        String   @default("hi-IN")
+  offenceCategory String?
+  bnsSections     String[]
+  isCognizable    Boolean?
+  firMandatory    Boolean?
+  firDraft        Json?
+  status          String   @default("classified")
+}
