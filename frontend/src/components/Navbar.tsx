@@ -41,25 +41,6 @@ export default function Navbar({ route, setRoute }: NavbarProps) {
             </button>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-4">
-            <button
-              className={`hidden sm:flex text-sm font-bold px-4 py-2 rounded-xl transition-all duration-200 ${route === 'login'
-                ? 'text-slate-900 bg-slate-100 dark:text-white dark:bg-slate-800'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              onClick={() => setRoute('login')}
-            >
-              Sign In
-            </button>
-            <button
-              className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-              onClick={() => setRoute('signup')}
-            >
-              Get Started
-            </button>
-          </div>
-
         </div>
       </div>
     </nav>

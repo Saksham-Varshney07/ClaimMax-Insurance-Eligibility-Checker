@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Phone, Shield } from 'lucide-react';
-import { supabase } from '../../../../JantaFIR main/project/src/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 interface SignupProps {
   onSwitchToLogin: () => void;
@@ -143,7 +143,7 @@ export default function Signup({ onSwitchToLogin, onSignupSuccess }: SignupProps
           </h2>
           <p className="text-gray-600 mb-8">
             {step === 'details'
-              ? 'Join the Jantafir ecosystem for professional security.'
+              ? ' Jantafir ecosystem for professional security.'
               : 'Enter the OTP code sent to your phone number.'}
           </p>
 

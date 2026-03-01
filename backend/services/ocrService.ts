@@ -3,6 +3,8 @@ import os from "os";
 import path from "path";
 import fs from "fs";
 import { BillData } from "../types";
+// NOTE: AI module import disabled for now - using local OCR
+// import { processBillPhoto } from '../../ai/track-a/ocr/bill-parser';
 
 /**
  * Classify a raw treatment string into a treatmentKey.

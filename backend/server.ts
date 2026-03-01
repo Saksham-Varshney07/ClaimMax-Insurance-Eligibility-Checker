@@ -9,14 +9,15 @@ import { startCleanupScheduler } from "./services/cleanupService";
 import extractBillRouter from "./routes/extractBill";
 import computeClaimsRouter from "./routes/computeClaims";
 import generateDocsRouter from "./routes/generateDocs";
+import verifyCardRouter from "./routes/verifyCard";
 
 const app = express();
 const PORT = process.env.PORT ?? 4000;
 
 // Middleware
 app.use(morgan("dev"));
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000" }));
-app.use(express.json({ limit: "1mb" }));
+app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173" }));
+app.use(express.json({ limit: "10mb" }));
 
 // Static – serve generated PDFs
 app.use("/docs", express.static(path.join(__dirname, "public", "docs")));
@@ -25,6 +26,7 @@ app.use("/docs", express.static(path.join(__dirname, "public", "docs")));
 app.use("/api", extractBillRouter);
 app.use("/api", computeClaimsRouter);
 app.use("/api", generateDocsRouter);
+app.use("/api", verifyCardRouter);
 
 // Start
 async function start(): Promise<void> {

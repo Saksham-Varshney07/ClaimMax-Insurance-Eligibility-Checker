@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Phone, Shield } from 'lucide-react';
-import { supabase } from '../../../../JantaFIR main/project/src/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 interface LoginProps {
   onSwitchToSignup: () => void;
