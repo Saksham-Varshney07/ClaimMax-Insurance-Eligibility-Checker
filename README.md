@@ -475,10 +475,6 @@ model Claim {
 
 ---
 
-## 📄 License
-
-This project was built for the HereWeGo Civic Hackathon 2026.
-
 ---
 
 <p align="center">
