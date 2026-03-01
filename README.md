@@ -471,7 +471,7 @@ model Claim {
 
 ## 👥 Team
 
-**Team AfterMath** - HereWeGo Civic Hackathon 2026
+**Team HereWeGo** - AfterMath Civic Hackathon 2026
 
 ---
 
