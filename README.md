@@ -247,6 +247,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ## 📱 How It Works
 
 ### User Flow
+<img width="1131" height="875" alt="image" src="https://github.com/user-attachments/assets/adb7dd88-c61e-465d-afcf-eab5eb75eac8" />
 
 ```
 1️⃣ UPLOAD BILL
@@ -278,6 +279,19 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
        • Final payable amount
        • Next steps
 ```
+1. Bill Amount Extraction 
+<img width="530" height="793" alt="image" src="https://github.com/user-attachments/assets/55602223-4647-4a06-804a-89bf0b5499cd" />
+
+
+2. Card Verification / Claim Eligibility
+<img width="1000" height="1079" alt="image" src="https://github.com/user-attachments/assets/121a214f-c96d-4c4d-adcf-9f1dd9e5784f" />
+
+
+
+
+
+
+
 
 ---
 
